@@ -1,39 +1,37 @@
 var Parser = require('binary-parser').Parser;
 var io = require('socket.io-client');
 var socket = io.connect('https://localhost:443', { rejectUnauthorized : false });
-var mqtt = require('mqtt').connect('http://localhost:1883');
 
 socket.on('connect', function() {
   console.log('# [Proxy] socket connected');
 });
 
-mqtt.on('connect', function() {
-  console.log('# [Proxy] mqtt connected');
+/* modified */
+const pi = require('./models/pi');
+const web = require('./models/web');
+const lora = require('./models/lora');
+function update() {
+	pi.find().limit(1).sort({'_id': -1}).exec((err, data) => {
+		socket.emit('pi', { 
+			time: data[0].time, 
+			solar: data[0].solar, 
+			sv: data[0].sv,
+			sh: data[0].sh
+		})
+	});
 
-  mqtt.subscribe('lora/+/up');
-});
+	web.find().limit(1).sort({'_id': -1}).exec((err, data) => {
+		//console.log(data);
+		socket.emit('web', { time: data[0].time, solar: data[0].solar, energy: data[0].energy });
+	});
 
-mqtt.on('message', function(topic, msg) {
-  try { msg = JSON.parse(msg); }
-  catch (e) { return; }
+	lora.find().limit(1).sort({'_id': -1}).exec((err, data) => {
+		console.log(data);
+		socket.emit('lora', { time: data[0].time, solar: data[0].solar, energy: data[0].energy });
+	});
 
-  try { msg.sensors = dataParse(new Buffer(msg.data, 'Base64')); }
-  catch (e) { }
-
-  socket.emit('data', msg);
-});
-
-function dataParse(data) {
-  if (data.length % 5 != 0) return [];
-  var sensors = [];
-  var x = new Parser()
-    .uint8('code')
-    .floatbe('value');
-
-  for (var i = 0; i < data.length; i += 5) {
-    var parsed = x.parse(data.slice(i, i + 5));
-    sensors.push({ code: parsed.code, value: Number(parsed.value.toFixed(2)) });
-  }
-
-  return sensors;
+	setTimeout(update, 5000);
 }
+
+update();
+/* end of modified */

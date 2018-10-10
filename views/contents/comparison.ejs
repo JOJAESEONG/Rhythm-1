@@ -1,0 +1,80 @@
+<div class="w3-container w3-card-2 w3-light-gray w3-round-large w3-section w3-padding w3-margin-right">
+          <div class="w3-panel">
+            <label class="w3-label w3-text-black" style="font-weight:bold;font-size:16px;">LoRa Data</label>
+          </div>
+          <div class="w3-panel">
+            <table id="table_nodes1" class="w3-table w3-border w3-bordered w3-white w3-small">
+              <tr>
+				<th>Time</th>
+                  <th>Solar(Wh/m2)</th>
+		            <th>Energy(KWh)</th>
+              </tr>
+              <tr>
+                <td id='lora_time'> - </td>
+                <td id='lora_solar'> - </td>
+		<td id='lora_energy'> - </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <div class="w3-container w3-card-2 w3-light-gray w3-round-large w3-section w3-padding w3-margin-right">
+          <div class="w3-panel">
+            <label class="w3-label w3-text-black" style="font-weight:bold;font-size:16px;">Solar Radiation</label>
+          </div>
+          <div class="w3-panel">
+            <table id="table_nodes2" class="w3-table w3-border w3-bordered w3-white w3-small">
+              <tr>
+							<th> Time </th>
+							<th> Solar(Wh/m2) </th>
+							<th> Energy(KWh) </th>
+              </tr>
+              <tr>
+                <td id='web_time'> - </td>
+                <td id='web_solar'> - </td>
+                <td id='web_energy'> - </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+          <div class="w3-container w3-card-2 w3-light-gray w3-round-large w3-section w3-padding w3-margin-right">
+            <div class="w3-panel">
+              <label class="w3-label w3-text-black" style="font-weight:bold;font-size:16px;">Raspberry Pi</label>
+            </div>
+            <div class="w3-panel">
+              <table id="table_nodes3" class="w3-table w3-border w3-bordered w3-white w3-small">
+                <tr>
+					<th> Time </th>
+					<th> POWER(KWh) </th>
+					 <th>경사일사량(Wh/m2)</th>
+					 <th>수평일사량(Wh/m2)</th>
+                  </tr>
+                <tr>
+                  <td id='pi_time'> - </td>
+                  <td id='pi_power'> - </td>
+                  <td id='pi_sv'> - </td>
+                  <td id='pi_sh'> - </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+<script>
+	const socket = io();
+	socket.on('pi', (data) => {
+		document.getElementById('pi_time').innerHTML = new Date(data.time);
+		document.getElementById('pi_power').innerHTML = data.solar.toFixed(2);
+		document.getElementById('pi_sv').innerHTML = data.sv.toFixed(2);
+		document.getElementById('pi_sh').innerHTML = data.sh.toFixed(2);
+	});
+
+	socket.on('web', (data) => {
+		document.getElementById('web_time').innerHTML = new Date(data.time);
+		document.getElementById('web_solar').innerHTML = data.solar.toFixed(2);
+		document.getElementById('web_energy').innerHTML = data.energy.toFixed(2);
+	});
+
+	socket.on('lora', (data) => {
+		document.getElementById('lora_time').innerHTML = new Date(data.time);
+		document.getElementById('lora_solar').innerHTML = data.solar;
+		document.getElementById('lora_energy').innerHTML = data.energy.toFixed(6);
+	});
+</script>

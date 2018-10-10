@@ -1,38 +1,49 @@
-var express = require('express');
-var router = express.Router();
 var passport = require('../lib/passport');
 var db = require('../lib/mongoose');
 var handler = require('../lib/route_index_eventHandler');
 
-router.get('/', passport.checkAuthenticate, function(req, res, next) {
-  res.render('index', { content: 'maps', options: JSON.stringify(db.getOptions.mapsDefaultLocation), gateways: JSON.stringify(db.listGateways), nodes: JSON.stringify(db.listNodes), msg: req.flash('message'), errmsg: req.flash('error') });
-});
+function route(app) {
+	app.get('/', passport.checkAuthenticate, function(req, res) {
+		res.render('index', { 
+			content: 'maps', 
+			options: JSON.stringify(db.getOptions.mapsDefaultLocation), 
+			gateways: JSON.stringify(db.listGateways), 
+			nodes: JSON.stringify(db.listNodes), 
+			msg: req.flash('message'), 
+			errmsg: req.flash('error') 
+		});
+	});
 
-router.post('/option/update', passport.checkAuthenticate, handler.updateOption, function(req, res, next) {
-  res.redirect('/');
-});
+	app.post('/option/update', passport.checkAuthenticate, handler.updateOption, function(req, rest) {
+		res.redirect('/');
+	});
 
-router.get('/realtime', passport.checkAuthenticate, function(req, res, next) {
-  res.render('realtime');
-});
-router.get('/comparison', passport.checkAuthenticate, function(req, res, next) {
-  res.render('comparison');
-});
+	app.post('/auth', 
+		passport.authenticate('local', {
+			successRedirect: '/',
+			failureRedirect: '/login',
+			failureFlash: true
+		})
+	);
 
-router.get('/login', function(req, res, next) {
-  if (req.isAuthenticated()) res.redirect('/logout');
-  else res.render('login', { errmsg: req.flash('error') });
-});
+	app.use('/devices', require('./devices'));
+	app.use('/sensors', require('./sensors'));
+	app.use('/charts', require('./charts'));
+	app.use('/comparison', require('./comparison'));
 
-router.get('/logout', function(req, res, next) {
-  if (req.isAuthenticated()) req.logout();
-  res.redirect('/login');
-});
+	app.get('/realtime', passport.checkAuthenticate, function(req, res) {
+		res.render('realtime');
+	});
 
-router.post('/auth', passport.authenticate('local', {
-  successRedirect: '/',
-  failureRedirect: '/login',
-  failureFlash: true
-}));
+	app.get('/login', function(req, res) {
+		if (req.isAuthenticated()) res.redirect('/logout');
+		res.render('login', { errmsg: req.flash('error') });
+	});
 
-module.exports = router;
+	app.get('/logout', function(req, res) {
+		if (req.isAuthenticated()) req.logout();
+		res.redirect('/login');
+	});
+}
+
+module.exports = route;
